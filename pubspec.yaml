@@ -20,8 +20,8 @@ dev_dependencies:
 flutter:
   plugin:
     platforms:
-      android:
-        package: co.quis.flutter_contacts
-        pluginClass: FlutterContactsPlugin
+      # android:
+      #   package: co.quis.flutter_contacts
+      #   pluginClass: FlutterContactsPlugin
       ios:
         pluginClass: FlutterContactsPlugin
