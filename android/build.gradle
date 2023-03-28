@@ -37,11 +37,14 @@ android {
     lintOptions {
         disable 'InvalidPackage'
     }
+    packagingOptions {
+        exclude 'META-INF/*'
+    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0-Beta"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")
 }
