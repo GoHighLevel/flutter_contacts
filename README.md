@@ -1,150 +1,550 @@
-# flutter_contacts
+# 📞 Flutter Contacts
 
-[![pub](https://img.shields.io/pub/v/flutter_contacts?label=version&style=flat-square)](https://pub.dev/packages/flutter_contacts)
-[![pub points](https://badges.bar/flutter_contacts/pub%20points)](https://pub.dev/packages/flutter_contacts/score)
-[![popularity](https://badges.bar/flutter_contacts/popularity)](https://pub.dev/packages/flutter_contacts/score)
-[![likes](https://badges.bar/flutter_contacts/likes)](https://pub.dev/packages/flutter_contacts/score)
+> **The fastest, most complete Flutter plugin for native contacts** 🚀
 
-Flutter plugin to read, create, update, delete and observe native contacts on Android and iOS, with vCard support, and contact permission handling.
+Get, create, update, and delete contacts with **comprehensive property support**. Includes groups, accounts, vCard import/export, native dialogs, real-time change listeners, permissions management, and platform-specific APIs across **Android**, **iOS**, and **macOS**.
 
-For a minimalistic example, take a look at [`example/`](https://github.com/QuisApp/flutter_contacts/blob/master/example). You can write a full-fledged contacts app with it – see [`example_full/`](https://github.com/QuisApp/flutter_contacts/blob/master/example_full) to see how.
+[![pub version](https://img.shields.io/pub/v/flutter_contacts?color=0288D1&logo=flutter&logoColor=white&logoSize=auto&style=for-the-badge&include_prereleases)](https://pub.dev/packages/flutter_contacts) [![pub likes](https://img.shields.io/pub/likes/flutter_contacts?color=26A69A&style=for-the-badge)](https://pub.dev/packages/flutter_contacts) [![pub dm](https://img.shields.io/pub/dm/flutter_contacts?color=5C6BC0&style=for-the-badge)](https://pub.dev/packages/flutter_contacts) [![license](https://img.shields.io/badge/license-MIT-546E7A?logo=github&logoColor=white&style=for-the-badge)](https://github.com/QuisApp/flutter_contacts/blob/master/LICENSE)
 
-## Quick start
+> 💬 **Have feedback on the new v2?** Share it by [opening an issue](https://github.com/QuisApp/flutter_contacts/issues/new) on GitHub!
+
+---
+
+## ⚡ Why Flutter Contacts?
+
+- 🏆 **Benchmarks:** up to **7x faster** reads, 100x faster bulk operations
+- 📈 **Scalable** - handles **10,000+ contacts** smoothly via batch operations
+- 🛡️ **Read/write** with comprehensive property support
+- 🔍 **Efficient filtering** by name, phone, email, group, and more
+- 👥 **Accounts & Groups** for multi-account contact management
+- 📇 **vCard import/export** supporting all properties and formats
+- 🔔 **Real-time change listeners** with change tracking
+- 🎨 **Native dialogs** for picking, viewing, editing contacts
+- 📱 **Android-specific APIs** - Blocked Numbers, Ringtones, SIM contacts
+- 🌍 **Cross-platform** - Android, iOS, and macOS
+
+---
+
+## 🚀 Quick Start
+
+### 1. Add Dependency
+
+```yaml
+dependencies:
+  flutter_contacts: ^2.0.0
+```
+
+### 2. Configure Permissions
+
+**Android** (`android/app/src/main/AndroidManifest.xml`):
+
+```xml
+<uses-permission android:name="android.permission.READ_CONTACTS"/>
+<uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+```
+
+**iOS** (`ios/Runner/Info.plist`):
+
+```xml
+<key>NSContactsUsageDescription</key>
+<string>We need access to your contacts to...</string>
+```
+
+<details>
+<summary><b>iOS Notes Entitlement</b></summary>
+
+To access contact notes on iOS, add the `com.apple.developer.contacts.notes` entitlement and set `FlutterContacts.config.enableIosNotes = true`. See [Apple's documentation](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.contacts.notes).
+
+</details>
+
+### 3. Basic Usage
 
 ```dart
-// See installation notes below regarding AndroidManifest.xml and Info.plist
 import 'package:flutter_contacts/flutter_contacts.dart';
 
-// Request contact permission
-if (await FlutterContacts.requestPermission()) {
-  // Get all contacts (lightly fetched)
-  List<Contact> contacts = await FlutterContacts.getContacts();
-
-  // Get all contacts (fully fetched)
-  contacts = await FlutterContacts.getContacts(
-      withProperties: true, withPhoto: true);
-
-  // Get contact with specific ID (fully fetched)
-  Contact contact = await FlutterContacts.getContact(contacts.first.id);
-
-  // Insert new contact
-  final newContact = Contact()
-    ..name.first = 'John'
-    ..name.last = 'Smith'
-    ..phones = [Phone('555-123-4567')];
-  await newContact.insert();
-
-  // Update contact
-  contact.name.first = 'Bob';
-  await contact.update();
-
-  // Delete contact
-  await contact.delete();
-
-  // Open external contact app to view/edit/pick/insert contacts.
-  await FlutterContacts.openExternalView(contact.id);
-  await FlutterContacts.openExternalEdit(contact.id);
-  final contact = await FlutterContacts.openExternalPick();
-  final contact = await FlutterContacts.openExternalInsert();
-
-  // Listen to contact database changes
-  FlutterContacts.addListener(() => print('Contact DB changed'));
-
-  // Export contact to vCard
-  String vCard = contact.toVCard();
-
-  // Import contact from vCard
-  contact = Contact.fromVCard('BEGIN:VCARD\n'
-      'VERSION:3.0\n'
-      'N:;Joe;;;\n'
-      'TEL;TYPE=HOME:123456\n'
-      'END:VCARD');
+// Request permissions
+final status = await FlutterContacts.permissions.request(PermissionType.readWrite);
+if (status == PermissionStatus.granted) {
+  // Get all contacts (fast - defaults to IDs and display names only)
+  List<Contact> contacts = await FlutterContacts.getAll();
+  
+  // Get a specific contact with all properties
+  Contact? contact = await FlutterContacts.get(
+    contacts.first.id!,
+    properties: ContactProperties.all,
+  );
 }
 ```
 
-## Simplified contact model
+📂 See [`example/`](example/) for a minimal example, or [flutter_contacts_example](https://github.com/QuisApp/flutter_contacts_example) for a full-fledged contacts app.
 
-See [code](https://github.com/QuisApp/flutter_contacts/blob/master/lib/contact.dart) for complete data model.
+---
+
+## 🧠 Core Concepts
+
+### 📐 API Structure
+
+| Category | API | Purpose |
+| --- | --- | --- |
+| **Core CRUD** | `FlutterContacts.get()`, `.getAll()`, `.create()`, `.createAll()`, `.update()`, `.updateAll()`, `.delete()`, `.deleteAll()` | Contact operations |
+| **Feature APIs** | `FlutterContacts.accounts`, `.groups`, `.permissions`, `.vCard`, `.native`, `.config` | Specialized features |
+| **Platform APIs** | `FlutterContacts.sim` (Android), `.profile` (Android/macOS), `.blockedNumbers` (Android), `.ringtones` (Android) | Platform-specific |
+| **Streams** | `FlutterContacts.onDatabaseChange`, `.onContactChange` | Real-time notifications |
+
+### ⚡ Selective Fetching
+
+By default, `get()` and `getAll()` fetch only **ID and display name**. Specify `properties` for additional fields.
+
+```dart
+// List view: display name is always fetched, add thumbnails
+await FlutterContacts.getAll(
+  properties: {ContactProperty.photoThumbnail},
+);
+
+// Detail view: all properties
+await FlutterContacts.get(contactId, properties: ContactProperties.all);
+```
+
+### 🔒 Data Integrity
+
+Only fetched properties can be updated. This prevents accidental data loss.
+
+```dart
+// Fetch name + phone only
+var contact = await FlutterContacts.get(id, properties: {ContactProperty.name, ContactProperty.phone});
+
+// Only name and phone are saved; email changes would be ignored
+contact = contact.copyWith(name: Name(first: 'Jane'));
+await FlutterContacts.update(contact);
+```
+
+<details>
+<summary><b>Unified Contact Model</b></summary>
+
+On Android, multiple "raw contacts" from different accounts are automatically merged into unified contacts. On iOS, the same merging happens behind the scenes. The plugin provides a single, consistent API across both platforms.
+
+</details>
+
+<details>
+<summary><b>Accounts & Groups</b></summary>
+
+**Accounts** (containers on iOS) organize contacts by source - Google, iCloud, local device. **Groups** (labels on Android) organize contacts within an account. When creating a contact, you can specify which account to use; otherwise, it uses the default.
+
+</details>
+
+---
+
+## 📊 Performance Benchmarks
+
+**Tested with ~2,000 contacts** on real devices (iPhone 7, Pixel 6):
+
+```
+                          Fetch all contacts: ID + display name (ms)
+
+                          ━━━━━━━━━━━━ iOS ━━━━━━━━━━━━  ━━━━━━━━━━ Android ━━━━━━━━━━━
+
+                          ◀─── faster  slower ───▶        ◀─── faster slower ───▶
+flutter_contacts v2       █████░░░░░░░░░░░░░░░░░░░  117   ██████████░░░░░░░░░░░░░   424
+fast_contacts             █████░░░░░░░░░░░░░░░░░░░  127   ███████░░░░░░░░░░░░░░░░   304
+contacts_service_plus     █████████████░░░░░░░░░░░  462   ███████████████░░░░░░░░   668
+flutter_contacts v1       ███████████████████████░  803   ███████████████████████  1075
+```
+
+| V2 vs V1            | iOS           | Android        |
+| ------------------- | ------------- | -------------- |
+| **Read speed**      | 1.6–7x faster | 2–5x faster    |
+| **Bulk create**     | 4x faster     | 5x faster      |
+| **Bulk delete**     | 34x faster    | 140x faster    |
+
+_See the [benchmark repository](https://github.com/QuisApp/flutter_contacts_benchmark) for detailed methodology and feature comparison._
+
+---
+
+## 📚 Core API
+
+### Read
+
+```dart
+// Single contact with all properties
+Contact? contact = await FlutterContacts.get(id, properties: ContactProperties.all);
+
+// All contacts with filtering
+List<Contact> contacts = await FlutterContacts.getAll(
+  properties: {ContactProperty.name, ContactProperty.phone},
+  filter: ContactFilter.name('John'),
+  limit: 100,
+);
+```
+
+Both `get()` and `getAll()` default to fetching only ID + display name. Specify `properties` for additional fields.
+
+**Properties:** `name`, `phone`, `email`, `address`, `organization`, `website`, `socialMedia`, `event`, `relation`, `note`, `photoThumbnail`, `photoFullRes`, `favorite` (Android), `ringtone` (Android), `sendToVoicemail` (Android), `timestamp` (Android), `identifiers` (Android). Use `ContactProperties.all` for all properties, or `ContactProperties.allProperties` to exclude photos. Only fetch the properties you need to improve query performance.
+
+**Filters:** `ContactFilter.name()`, `.phone()`, `.email()`, `.group()`, `.ids()`. Phone/email filters use partial match on Android, full match on iOS.
+
+### Create
+
+```dart
+String id = await FlutterContacts.create(contact, account: account);
+List<String> ids = await FlutterContacts.createAll([contact1, contact2]);
+```
+
+### Update
+
+```dart
+// Must fetch first (see Data Integrity above)
+await FlutterContacts.update(contact);
+await FlutterContacts.updateAll([contact1, contact2]);
+```
+
+### Delete
+
+```dart
+await FlutterContacts.delete(id);
+await FlutterContacts.deleteAll([id1, id2, id3]);
+```
+
+---
+
+## 🔧 Feature APIs
+
+<details>
+<summary><b>🔐 Permissions</b></summary>
+
+```dart
+bool has = await FlutterContacts.permissions.has(PermissionType.read);
+PermissionStatus status = await FlutterContacts.permissions.check(PermissionType.read);
+PermissionStatus result = await FlutterContacts.permissions.request(PermissionType.readWrite);
+await FlutterContacts.permissions.openSettings();
+```
+
+**Types:** `PermissionType.read`, `.write`, `.readWrite` (on iOS, all are equivalent).
+
+</details>
+
+<details>
+<summary><b>👤 Accounts</b></summary>
+
+```dart
+List<Account> accounts = await FlutterContacts.accounts.getAll();
+Account? defaultAccount = await FlutterContacts.accounts.getDefault();
+await FlutterContacts.accounts.showDefaultPicker(); // Android only
+```
+
+</details>
+
+<details>
+<summary><b>👥 Groups</b></summary>
+
+```dart
+Group? group = await FlutterContacts.groups.get(groupId, withContactCount: true);
+List<Group> groups = await FlutterContacts.groups.getAll(accounts: [account]);
+Group created = await FlutterContacts.groups.create('Family', account: account);
+await FlutterContacts.groups.update(group);
+await FlutterContacts.groups.delete(groupId);
+await FlutterContacts.groups.addContacts(groupId: groupId, contactIds: [id1, id2]);
+await FlutterContacts.groups.removeContacts(groupId: groupId, contactIds: [id1]);
+List<Group> contactGroups = await FlutterContacts.groups.getOf(contactId);
+```
+
+</details>
+
+<details>
+<summary><b>📇 vCard</b></summary>
+
+```dart
+String vCard = FlutterContacts.vCard.export(contact, version: VCardVersion.v3);
+String vCards = FlutterContacts.vCard.exportAll([contact1, contact2]);
+List<Contact> contacts = FlutterContacts.vCard.import(vCardString);
+```
+
+Supports vCard 2.1, 3.0, and 4.0.
+
+</details>
+
+<details>
+<summary><b>🎨 Native Dialogs</b> (Android & iOS)</summary>
+
+No permissions required - uses system UI.
+
+```dart
+String? pickedId = await FlutterContacts.native.showPicker();
+await FlutterContacts.native.showViewer(contactId);
+String? editedId = await FlutterContacts.native.showEditor(contactId);
+String? createdId = await FlutterContacts.native.showCreator(contact: prefill);
+```
+
+</details>
+
+<details>
+<summary><b>🔔 Change Listeners</b></summary>
+
+```dart
+FlutterContacts.onDatabaseChange.listen((_) => refreshUI());
+
+FlutterContacts.onContactChange.listen((changes) {
+  for (final change in changes) {
+    print('${change.type}: ${change.contactId}');
+  }
+});
+```
+
+</details>
+
+<details>
+<summary><b>📱 SIM Contacts</b> (Android only)</summary>
+
+```dart
+List<Contact> simContacts = await FlutterContacts.sim.get();
+```
+
+SIM contacts are read-only and typically contain only name and phone.
+
+</details>
+
+<details>
+<summary><b>👤 Profile / "Me" Card</b> (Android & macOS)</summary>
+
+```dart
+Contact? me = await FlutterContacts.profile.get(properties: ContactProperties.all);
+```
+
+Returns the device owner's profile (Android) or "Me" card (macOS). Not available on iOS.
+
+</details>
+
+<details>
+<summary><b>🚫 Blocked Numbers</b> (Android only)</summary>
+
+Requires app to be default phone app. See [example manifest](https://github.com/QuisApp/flutter_contacts_example/blob/master/android/app/src/main/AndroidManifest.xml).
+
+```dart
+if (await FlutterContacts.blockedNumbers.isAvailable()) {
+  bool isBlocked = await FlutterContacts.blockedNumbers.isBlocked('+1234567890');
+  List<Phone> blocked = await FlutterContacts.blockedNumbers.getAll();
+  await FlutterContacts.blockedNumbers.block('+1234567890');
+  await FlutterContacts.blockedNumbers.blockAll([number1, number2]);
+  await FlutterContacts.blockedNumbers.unblock('+1234567890');
+  await FlutterContacts.blockedNumbers.unblockAll([number1, number2]);
+  await FlutterContacts.blockedNumbers.openDefaultAppSettings();
+}
+```
+
+</details>
+
+<details>
+<summary><b>🔔 Ringtones</b> (Android only)</summary>
+
+```dart
+String? uri = await FlutterContacts.ringtones.pick(type: RingtoneType.ringtone);
+Ringtone? ringtone = await FlutterContacts.ringtones.get(uri, withMetadata: true);
+List<Ringtone> all = await FlutterContacts.ringtones.getAll(type: RingtoneType.ringtone);
+String? defaultUri = await FlutterContacts.ringtones.getDefaultUri(RingtoneType.ringtone);
+await FlutterContacts.ringtones.setDefaultUri(RingtoneType.ringtone, uri);
+await FlutterContacts.ringtones.play(uri);
+await FlutterContacts.ringtones.stop();
+```
+
+</details>
+
+<details>
+<summary><b>⚙️ Configuration</b></summary>
+
+```dart
+FlutterContacts.config.enableIosNotes = true; // Requires iOS entitlement
+```
+
+</details>
+
+---
+
+## 📋 Data Model
+
+> **See [lib/models/](https://github.com/QuisApp/flutter_contacts/tree/master/lib/models) for complete data model documentation.**
+
+A `Contact` contains an `id`, an auto-generated `displayName`, and lists of properties (`phones`, `emails`, `addresses`, etc.). Many properties support native labels (home, work, mobile, etc.) and custom labels.
+
+<details>
+<summary><b>Contact Structure</b></summary>
 
 ```dart
 class Contact {
-    String id;
-    String displayName;
-    Uint8List? photo;
-    Uint8List? thumbnail;
-    Name name;
-    List<Phone> phones;
-    List<Email> emails;
-    List<Address> addresses;
-    List<Organization> organizations;
-    List<Website> websites;
-    List<SocialMedia> socialMedias;
-    List<Event> events;
-    List<Note> notes;
-    List<Group> groups;
+  final String? id;                         // Stable identifier
+  final String? displayName;                // Read-only, auto-generated
+  final Photo? photo;
+  final Name? name;
+  final List<Phone> phones;
+  final List<Email> emails;
+  final List<Address> addresses;
+  final List<Organization> organizations;
+  final List<Website> websites;
+  final List<SocialMedia> socialMedias;
+  final List<Event> events;                 // Birthdays, anniversaries
+  final List<Relation> relations;
+  final List<Note> notes;
+
+  // Android-specific fields: isFavorite, customRingtone,
+  // sendToVoicemail, timestamp, identifiers
+  final AndroidData? android;
 }
-class Name { String first; String last; }
-class Phone { String number; PhoneLabel label; }
-class Email { String address; EmailLabel label; }
-class Address { String address; AddressLabel label; }
-class Organization { String company; String title; }
-class Website { String url; WebsiteLabel label; }
-class SocialMedia { String userName; SocialMediaLabel label; }
-class Event { int? year; int month; int day; EventLabel label; }
-class Note { String note; }
-class Group { String id; String name; }
 ```
 
-## Demo
+</details>
 
-![demo](https://user-images.githubusercontent.com/1289004/101141809-ab165c00-35c9-11eb-90ff-b10318b13f16.gif)
+<details>
+<summary><b>Property Types</b></summary>
 
-## Installation
+```dart
+// Name
+Name(
+  first: 'John',
+  last: 'Smith',
+  middle: 'Q',
+  prefix: 'Dr.',
+  suffix: 'Jr.',
+)
 
-1. Add the following key/value pair to your app's `Info.plist` (for iOS):
-    ```xml
-    <plist version="1.0">
-    <dict>
-        ...
-        <key>NSContactsUsageDescription</key>
-        <string>Reason we need access to the contact list</string>
-    </dict>
-    </plist>
-    ```
-1. Add the following `<uses-permissions>` tags to your app's `AndroidManifest.xml` (for
-   Android):
-    ```xml
-    <manifest xmlns:android="http://schemas.android.com/apk/res/android" ...>
-        <uses-permission android:name="android.permission.READ_CONTACTS"/>
-        <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
-        <application ...>
-        ...
-    ```
+// Phone, Email, Address
+Phone('555-1234')
+Phone('555-1234', label: Label(PhoneLabel.mobile))
+Email('john@example.com', label: Label(EmailLabel.work))
+Address(
+  street: '123 Main St',
+  city: 'New York',
+  state: 'NY',
+  postalCode: '10001',
+  label: Label(AddressLabel.home),
+)
 
-## Notes
+// Organization
+Organization(
+  organizationName: 'FlutterCorp',
+  jobTitle: 'Software Engineer',
+  departmentName: 'Engineering',
+)
 
-* On iOS13+ you can only access notes if your app is
-  [entitled by Apple](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_developer_contacts_notes)
-  so notes are disabled by default. If you get entitlement, enable them via
-  ```dart
-  FlutterContacts.config.includeNotesOnIos13AndAbove = true;
-  ```
-* On both iOS and Android there is a concept of **raw** and **unified** contacts. A
-  single person might have two raw contacts (for example from Gmail and from iCloud) but
-  will be merged into a single view called a unified contact. In a contact app you
-  typically want unified contacts, so this is what's returned by default. You can get
-  raw contacts instead via
-  ```dart
-  FlutterContacts.config.returnUnifiedContacts = false;
-  ```
-  However, for now, raw contacts cannot be inserted, updated or deleted.
+// Photo
+Photo(fullSize: imageBytes)
+```
 
-## Feature requests
+> **Address Usage:** Prefer component fields (`street`, `city`, `state`, etc.) when creating/editing. The `formatted` field is available when reading and is guaranteed to be present.
 
-These features have been requested and will be available soon.
+> **Photo Usage:** When creating/updating, set `Photo(fullSize: imageBytes)` - the system automatically generates the thumbnail. When reading, fetch `ContactProperty.photoThumbnail` (fast) for contact lists, `ContactProperty.photoFullRes` (slower) for detail views.
 
-* Write groups ("labels" on Android, "groups" on iOS), currently read-only
-* Read/write custom ringtones [#22](https://github.com/QuisApp/flutter_contacts/issues/22)
-* Block contacts [#28](https://github.com/QuisApp/flutter_contacts/issues/28)
-* Support for contacts stored in SIM card [#26](https://github.com/QuisApp/flutter_contacts/issues/26) [#23](https://github.com/QuisApp/flutter_contacts/issues/23)
-* More raw account information on Android [#5](https://github.com/QuisApp/flutter_contacts/issues/5) [#8](https://github.com/QuisApp/flutter_contacts/issues/8)
+> **Note:** The examples above show common fields. See [lib/models/](https://github.com/QuisApp/flutter_contacts/tree/master/lib/models) for the complete list of all available fields and properties.
+
+</details>
+
+<details>
+<summary><b>Labels</b></summary>
+
+Most properties support **labels** (home, work, mobile, etc.) and **custom labels**:
+
+```dart
+// Standard label
+Phone('555-1234', label: Label(PhoneLabel.mobile))
+
+// Custom label
+Phone('555-1234', label: Label(PhoneLabel.custom, customLabel: 'Emergency'))
+```
+
+**Platform Support:** Some labels are platform-specific (e.g., `PhoneLabel.appleWatch` is iOS-only, `PhoneLabel.workMobile` is Android-only). Unsupported labels are automatically converted to custom labels with the original name preserved.
+
+</details>
+
+---
+
+## ⚠️ Platform Limitations
+
+<details>
+<summary><b>iOS & macOS</b></summary>
+
+**Not Available:**
+- APIs: `ringtones`, `blockedNumbers`, `sim`, `profile` (iOS), `native` (macOS)
+- Properties: `favorite`, `ringtone`, `sendToVoicemail`, `timestamp`, `identifiers`, `debugData` (all nested in `android` field)
+- Fields: `Phone.isPrimary`, `Phone.normalizedNumber`, `Email.isPrimary`, `Address.poBox`, `Address.neighborhood`, `Organization.jobDescription`, `Organization.symbol`, `Organization.officeLocation`
+- Some Android-specific labels (auto-converted to custom)
+
+**Limits:** One organization, one note, one birthday per contact.
+
+**Filtering:** Phone and email filters only support full match (not partial).
+
+**iOS Notes:** Requires the `com.apple.developer.contacts.notes` entitlement and `FlutterContacts.config.enableIosNotes = true`. See [Apple's documentation](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.contacts.notes).
+
+</details>
+
+<details>
+<summary><b>Android</b></summary>
+
+**Not Available:**
+- Fields: `Name.previousFamilyName`, `Address.isoCountryCode`, `Address.subAdministrativeArea`, `Address.subLocality`
+- Some iOS-specific labels (auto-converted to custom)
+
+**Special Features:**
+- **SIM Contacts:** Read-only, typically name + phone only
+- **Blocked Numbers:** Requires app to be default phone app
+
+</details>
+
+---
+
+## 🔄 Migrating from v1
+
+If you're using [flutter_contacts v1](https://pub.dev/packages/flutter_contacts/versions/1.1.9+2):
+
+| v1 | v2 |
+| --- | --- |
+| `FlutterContacts.getContacts()` | `FlutterContacts.getAll()` |
+| `FlutterContacts.getContact(id)` | `FlutterContacts.get(id)` |
+| `contact.insert()` | `FlutterContacts.create(contact)` |
+| `FlutterContacts.requestPermission()` | `FlutterContacts.permissions.request(PermissionType.readWrite)` |
+| `FlutterContacts.addListener()` | `FlutterContacts.onDatabaseChange.listen()` |
+| `contact.toVCard()` | `FlutterContacts.vCard.export(contact)` |
+| `PhoneLabel.mobile` | `Label(PhoneLabel.mobile)` |
+| `FlutterContacts.openExternalView(id)` | `FlutterContacts.native.showViewer(id)` |
+| `FlutterContacts.openExternalPick()` | `FlutterContacts.native.showPicker()` |
+| `FlutterContacts.openExternalEdit(id)` | `FlutterContacts.native.showEditor(id)` |
+| `FlutterContacts.openExternalInsert()` | `FlutterContacts.native.showCreator()` |
+
+---
+
+## 🤝 Contributing
+
+We'd love your help making this plugin even better. Found a bug? Have a feature idea? Want to improve the docs?
+
+- 🐛 [Report an issue](https://github.com/QuisApp/flutter_contacts/issues)
+- 💡 [Suggest a feature](https://github.com/QuisApp/flutter_contacts/issues)
+- 🔧 [Submit a pull request](https://github.com/QuisApp/flutter_contacts/pulls)
+- 📖 Improve the documentation
+
+Every contribution, big or small, makes a difference. Thank you for helping make Flutter Contacts better for everyone.
+
+---
+
+## 📄 License
+
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 💝 Support
+
+Flutter Contacts is maintained in my free time. If this plugin has been helpful for your project, consider supporting its development. Your support helps me continue maintaining and improving it.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/G2G11OWJA4)
+
+---
+
+## 🙏 Acknowledgments
+
+Special thanks to all contributors and users who have helped shape this plugin.
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the Flutter community**
+
+[⭐ Star us on GitHub](https://github.com/QuisApp/flutter_contacts) | [📖 Documentation](https://pub.dev/documentation/flutter_contacts/latest/) | [🐛 Report Issues](https://github.com/QuisApp/flutter_contacts/issues)
+
+</div>

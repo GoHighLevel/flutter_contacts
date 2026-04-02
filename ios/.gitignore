@@ -34,4 +34,10 @@ Icon?
 .tags*
 
 /Flutter/Generated.xcconfig
+/Flutter/Debug.xcconfig
+/Flutter/Release.xcconfig
+/Flutter/ephemeral/
 /Flutter/flutter_export_environment.sh
+
+# Podfile.lock can cause conflicts
+Podfile.lock
