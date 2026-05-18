@@ -1,23 +1,22 @@
-#
-# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint flutter_contacts.podspec' to validate before publishing.
-#
 Pod::Spec.new do |s|
   s.name             = 'flutter_contacts'
   s.version          = '0.0.1'
-  s.summary          = 'A new flutter plugin project.'
+  s.summary          = 'Fast, complete contact management for Android, iOS & macOS.'
   s.description      = <<-DESC
-A new flutter plugin project.
+Fast, complete contact management for Android, iOS & macOS — all fields, groups, accounts, vCards, native dialogs, listeners, SIM contacts, and number blocking.
                        DESC
   s.homepage         = 'http://example.com'
-  s.license          = { :file => '../LICENSE' }
+  s.license          = { :type => 'MIT', :file => '../LICENSE' }
   s.author           = { 'Your Company' => 'email@example.com' }
-  s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source           = { :git => 'https://github.com/QuisApp/flutter_contacts.git', :tag => s.version.to_s }
+  s.source_files = 'flutter_contacts/Sources/flutter_contacts/**/*.swift'
+  s.resource_bundles = {'flutter_contacts_privacy' => ['flutter_contacts/Sources/flutter_contacts/PrivacyInfo.xcprivacy']}
   s.dependency 'Flutter'
-  s.platform = :ios, '8.0'
-
-  # Flutter.framework does not contain a i386 slice. Only x86_64 simulators are supported.
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
+  s.platform = :ios, '13.0'
+  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
+
+  s.test_spec 'Tests' do |test_spec|
+    test_spec.source_files = 'Tests/**/*'
+  end
 end

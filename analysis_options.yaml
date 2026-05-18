@@ -1,6 +1,3 @@
-include: package:pedantic/analysis_options.yaml
-
-linter:
-  rules:
-    # set literals are not supported before dart 2.2
-    prefer_collection_literals: false
+include: package:flutter_lints/flutter.yaml
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
